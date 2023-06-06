@@ -1,44 +1,49 @@
-import numpy as np
-import pandas as pd
+from Bio import Entrez
+from Bio.Blast import NCBIWWW, NCBIXML, Record
 
-from Bio import SeqIO
-from Bio.Seq import Seq
-from Bio.SeqRecord import SeqRecord
-from Bio.Alphabet import generic_dna
-    
 
-def read_fasta(fasta_file):
-    """
-    Reads a fasta file and returns a list of SeqRecord objects.
-    """
-    return list(SeqIO.parse(fasta_file, "fasta", generic_dna))
+import tkinter as tk
 
-def read_csv(csv_file):
-    """
-    Reads a csv file and returns a pandas dataframe.
-    """
-    return pd.read_csv(csv_file)
+Entrez.email = "karim.salama@campus.tu-berlin.de"
 
-def write_fasta(fasta_file, seq_records):
-    """
-    Writes a list of SeqRecord objects to a fasta file.
-    """
-    SeqIO.write(seq_records, fasta_file, "fasta")
 
-def write_csv(csv_file, dataframe):
-    """
-    Writes a pandas dataframe to a csv file.
-    """
-    dataframe.to_csv(csv_file, index=False)
+#a function to get the protein sequence from the accession number
+def get_protein_sequence(accession_number):
+    handle = Entrez.efetch(db="protein", id=accession_number, rettype="fasta", retmode="text")
+    record = handle.read()
+    handle.close()
+    return record
 
-def get_seq(seq_record):
-    """
-    Returns the sequence of a SeqRecord object.
-    """
-    return str(seq_record.seq)
+#a function to blast the protein accession number against the nr database
 
-def get_id(seq_record):
-    """
-    Returns the id of a SeqRecord object.
-    """
-    return seq_record.id
+
+def blast_protein_sequence(protein_sequence):
+    result_handle = NCBIWWW.qblast("blastp", "nr", protein_sequence,hitlist_size=1)
+    blast_record = NCBIXML.read(result_handle)
+    return blast_record
+
+# a function using the parseblasttable to parse the blast record and get the alignment
+
+def get_alignment(blast_record):
+    for alignment in blast_record.alignments:
+        for hsp in alignment.hsps:
+            print('****Alignment****')
+            print('sequence:', alignment.title)
+            print('length:', alignment.length)
+            print('e value:', hsp.expect)
+            print(hsp.query[0:75] + '...')
+            print(hsp.match[0:75] + '...')
+            print(hsp.sbjct[0:75] + '...')
+
+
+#test the functions
+protein_sequence = get_protein_sequence("NP_001035601.1")
+blast_record = blast_protein_sequence(protein_sequence)
+
+#parse the blast record
+alignment = get_alignment(blast_record)      
+print(blast_record)
+
+#open a tkinter window displaying the alignment
+
+
