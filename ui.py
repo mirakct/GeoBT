@@ -62,7 +62,7 @@ def click_me():
     search_threshold = threshold_entry.get()
     print(search_query+search_type)
     res_list.delete(*res_list.get_children())
-    protein_sequence = bp.get_protein_sequence("WP_103908321")
+    protein_sequence = bp.get_protein_sequence("WP_278812783")
     blast_record = bp.blast_protein_sequence(protein_sequence, hl=int(spin_size.get()),entrez=search, threshold=float(search_threshold))
     global b_r
     b_r = blast_record

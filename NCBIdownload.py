@@ -2,6 +2,32 @@
 from Bio import Entrez
 from Bio import SeqIO   
 
+# Provide your email address to NCBI
+Entrez.email = "linda.jungwirth1@gmail.com"
+
+#Get accession number
+def get_accession_number():
+    search_term = "Dehalococcoides mccartyi[Organism] AND methionine synthase[Protein]"
+    handle = Entrez.esearch(db="protein", term=search_term, retmax=1)
+    record = Entrez.read(handle)
+    handle.close()
+
+    if int(record["Count"]) == 0:
+        print("Accession number not found.")
+        return None
+
+    gi_number = record["IdList"][0]
+    handle = Entrez.efetch(db="protein", id=gi_number, rettype="gb", retmode="text")
+    record = SeqIO.read(handle, "genbank")
+    handle.close()
+
+    accession_number = record.annotations["accessions"][0]
+    print("Accession number:", accession_number)
+    return accession_number
+
+# Main execution
+accession_number = get_accession_number()
+
 # Download protein from NCBI 
 def download_protein_sequence(accession):                                   # Defining the function
     Entrez.email = 'linda.jungwirth1@gmail.com'                             # Set your email address for Entrez
@@ -12,7 +38,7 @@ def download_protein_sequence(accession):                                   # De
     return handle.read()                                                    # Returning the record
 
 # Download core-MetE protein sequence
-accession = 'WP_011309033'                                                  # Defining the accession number
+accession = accession_number                                                  # Defining the accession number
 sequence = download_protein_sequence(accession)                             # Defining the sequence
 print(sequence)                                                             # Printing the sequence
 
