@@ -1,21 +1,84 @@
 from Bio import Entrez
 from Bio.Blast import NCBIWWW, NCBIXML
 from Bio import Align
-from Bio import AlignIO
+from Bio import SeqIO
+from io import StringIO
 import datetime
 
-import tkinter as tk #hello
+import dotenv
+import os
 
-Entrez.email = "karim.salama@campus.tu-berlin.de"
+# Load environment variables
+dotenv.load_dotenv()
 
 
+Entrez.email = os.getenv("EMAIL")
+Entrez.api_key = os.getenv("API_KEY")
+
+
+
+###ENTREZ SEARCH###
+#
+#
+#Get accession number
+def get_accession_number(search_query):                                                             # Defining the function
+    search_term = search_query # Defining the search term
+    handle = Entrez.esearch(db="protein", term=search_term, retmax=1)                   # Defining the handle
+    record = Entrez.read(handle)                                                        # Reading the handle
+    handle.close()                                                                      # Closing the handle
+
+    if int(record["Count"]) == 0:                                                       # Checking if the count is 0
+        print("Accession number not found.")                                            # Printing a message
+        return None                                                                     # Returning None
+
+    gi_number = record["IdList"][0]                                                     # Getting the GI number
+    handle = Entrez.efetch(db="protein", id=gi_number, rettype="gb", retmode="text")    # Defining the handle
+    record = SeqIO.read(handle, "genbank")                                              # Reading the handle
+    handle.close()                                                                      # Closing the handle
+
+    accession_number = record.annotations["accessions"][0]                              # Getting the accession number
+    print("Accession number:", accession_number)                                        # Printing the accession number
+    return accession_number                                                             # Returning the accession number
+
+                                             # Getting the accession number
+
+# Download protein from NCBI 
+def download_protein_sequence(accession):                                   # Defining the function
+
+    handle = Entrez.efetch(db='protein',                                    # Defining the handle
+                           id=accession,                                    # Defining the accession number
+                           rettype='fasta',                                 # Defining the return type
+                           retmode='text')                                  # Defining the return mode
+    return handle.read()                                                    # Returning the record
+
+
+
+#Save sequence as a fasta file  #needs the SeqIO module
+def write_fasta(path,seq):             # Defining the file path
+    with open(path, "w") as file:                                          # Opening the file
+        file.write(seq)                                                    # Writing the sequence to the file
+    print("Saved sequence to", path)                                       # Printing the file path
+
+def read_fasta(fasta_string):
+    
+    parse_string=StringIO(fasta_string)
+
+    record = SeqIO.read(parse_string, "fasta")                                    # Read the FASTA file
+    
+    sequence = str(record.seq)
+    return sequence
+
+#####BLAST#####
+#
+#
 #a function to get the protein sequence from the accession number
+'''
 def get_protein_sequence(accession_number):
     handle = Entrez.efetch(db="protein", id=accession_number, rettype="fasta", retmode="text")
     record = handle.read()
     handle.close()
     return record
-
+'''
 #a function to blast the protein accession number against the nr database
 
 
@@ -64,6 +127,9 @@ def blast_protein_sequence(protein_sequence, hl=5, entrez='none', threshold='non
     return out
 
 
+
+#####ALIGNMENT#####
+#
 # on install change changge line_width in __init__.py of Bio.Align to 99999999 #####################
 # alignment using PairwiseAligner using substitution matrix BLOSUM62
 def align_sequences(seq1, seq2,scope='global'):

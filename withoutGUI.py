@@ -3,7 +3,7 @@ from Bio.Blast import NCBIWWW, NCBIXML
 from Bio import Align #von ChatGPT & Copilot wurde noch vorgeschlagen, pairwise2 zu benutzen, aber das ist deprecated --> wird nicht mehr weiterentwickelt
 from Bio import AlignIO
 
-Entrez.email = "karim.salama@campus.tu-berlin.de"
+Entrez.email = ""
 
 # Accession number of the protein sequence
 accession_number = "WP_278812783"

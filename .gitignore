@@ -2,3 +2,6 @@ errorlog.txt
 blast.xml
 __pycache__/bp.cpython-311.pyc
 __pycache__/ui.cpython-311.pyc
+.env
+*.pyc
+*.fasta
