@@ -207,7 +207,7 @@ fasta_frame.pack() #pack the frame
 # user options
 user_options = tk.Frame(mframe)
 #collapsible pane
-cBlast = cp(user_options, 'Close BLAST', 'Open BLAST')
+cBlast = cp(user_options, 'Close BLAST options', 'Open BLAST options')
 cBlast.grid(row = 0, column = 0)
 
 # Search Label
@@ -273,8 +273,8 @@ def click_me():
 
 
 # search button
-search_button = ttk.Button(cBlast.frame, text="BLAST",command=click_me)
-search_button.grid(column=2, row=5,sticky='NW', padx=10, pady=10)
+search_button = ttk.Button(user_options, text="BLAST",command=click_me)
+search_button.grid(column=0, row=5,sticky='NW', padx=10, pady=10)
 
 user_options.pack()
 
