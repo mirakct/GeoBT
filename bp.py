@@ -13,9 +13,19 @@ dotenv.load_dotenv()
 
 
 Entrez.email = os.getenv("EMAIL")
-Entrez.api_key = os.getenv("API_KEY")
+if os.getenv("API_KEY") != "":
+    Entrez.api_key = os.getenv("API_KEY")
 
+def  save_credentials(email, api_key):
+    with open('.env', 'w') as file:
+        file.write('EMAIL=' + email + '\n')
+        file.write('API_KEY=' + api_key + '\n')
 
+def get_credentials():
+    with open('.env', 'r') as file:
+        email = file.readline().split('=')[1].strip()
+        api_key = file.readline().split('=')[1].strip()
+    return email, api_key
 
 ###ENTREZ SEARCH###
 #

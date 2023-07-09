@@ -8,26 +8,99 @@ from tkinter import Spinbox
 from tkinter import filedialog as fd
 import Analysisprotein as ap
 import bp
+from collapsible import CollapsiblePane as cp
+
+def on_configure(event):
+    # update scrollregion after starting 'mainloop'
+    # when all widgets are in canvas
+    mCanvas.configure(scrollregion=mCanvas.bbox('all'))
 
 # Create instance
 win = tk.Tk()
+menubar = Menu(win)
+win.config(menu=menubar)
 win.geometry("1000x850")
 
 # Add a title
 win.title("SBA GUI")
 
+def a_env():
+    #add new window for credential input
+    cred_win = tk.Toplevel(win)
+    cred_win.title("Credentials")
+    cred_win.geometry("400x150")
+    cred_win.resizable(False, False)
+    #add labels and entries
+    #email
+    email_label = ttk.Label(cred_win, text="Email:")
+    email_label.grid(column=0, row=0,sticky='NW', padx=10, pady=10)
+    email_entry = ttk.Entry(cred_win, width=25)
+    email_entry.grid(column=1, row=0,sticky='NW', padx=10, pady=10)
+    #api key
+    api_label = ttk.Label(cred_win, text="API key (optional):")
+    api_label.grid(column=0, row=1,sticky='NW', padx=10, pady=10)
+    api_entry = ttk.Entry(cred_win, width=25)
+    api_entry.grid(column=1, row=1,sticky='NW', padx=10, pady=10)
+    #button
+    def save_cred():
+        email = email_entry.get()
+        api_key = api_entry.get()
+        if email == '':
+            mBox.showinfo('Error', 'Please enter a valid email')
+        else:
+            bp.save_credentials(email, api_key)
+            cred_win.destroy()
+    save_button = ttk.Button(cred_win, text="Save", command=save_cred )
+    save_button.grid(column=1, row=2,sticky='NW', padx=10, pady=10)
 
+    #exit button
+    def exit_cred():
+        cred_win.destroy()
+    exit_button = ttk.Button(cred_win, text="Exit", command=exit_cred )
+    exit_button.grid(column=0, row=2,sticky='NW', padx=10, pady=10)
+
+#open credentials on startup if they don't exist
+try:
+    bp.get_credentials()
+except:
+    a_env()
+
+
+cred_menu=Menu(menubar)
+menubar.add_cascade(label ='Setup', menu = cred_menu)
+cred_menu.add_command(
+    label='Credentials',
+    command=a_env
+)
+
+
+#mCanvas= tk.Canvas(win)
+#mCanvas.pack(side=tk.LEFT)
+
+#scroll_bar = tk.Scrollbar(win,command=mCanvas.yview)
+#scroll_bar.pack(side=tk.RIGHT, fill='y')
+
+#mCanvas.configure(yscrollcommand = scroll_bar.set)
+#mCanvas.bind('<Configure>', on_configure)
+
+mframe = tk.Frame(win)
+#mCanvas.create_window((0,0), window=mframe)
+mframe.pack()
 
 ### Query Entrez ###
-fasta_frame = tk.Frame(win)
+fasta_frame = tk.Frame(mframe)
+#collapsible pane
+cEntrez = cp(fasta_frame, 'Close Entrez', 'Open Entrez')
+cEntrez.toggle()
+cEntrez.grid(row = 0, column = 0)
 
 # Query Entrez Label
-query_label = ttk.Label(fasta_frame, text="Search Entrez:")
+query_label = ttk.Label(cEntrez.frame, text="Search Entrez:")
 query_label.grid(column=0, row=0,sticky='NW', padx=10, pady=10)
 
 # Query Entrez Entry
 st = tk.StringVar()
-query_entry = ttk.Entry(fasta_frame, width=50, text=st)
+query_entry = ttk.Entry(cEntrez.frame, width=50, text=st)
 st.set("Dehalococcoides mccartyi[Organism] AND methionine synthase[Protein]")
 query_entry.grid(column=1, row=0,sticky='NW', padx=10, pady=10)
 
@@ -72,21 +145,21 @@ def entrez_query():
     last_record = entrez_fasta
 
 #query button
-query_button = ttk.Button(fasta_frame, text="Search", command=entrez_query)
+query_button = ttk.Button(cEntrez.frame, text="Search", command=entrez_query)
 query_button.grid(column=2, row=0,sticky='SW', padx=10, pady=10)
 
 #text output label
-fasta_label = ttk.Label(fasta_frame, text="Fasta sequence:")
+fasta_label = ttk.Label(cEntrez.frame, text="Fasta sequence:")
 fasta_label.grid(column=0, row=1,sticky='SW', padx=10)
 
 #Text output box
-fasta_scroll = ttk.Scrollbar(fasta_frame)
-fasta_box = scrolledtext.ScrolledText(fasta_frame, yscrollcommand=fasta_scroll.set, height=10, wrap=tk.WORD, )
+fasta_scroll = ttk.Scrollbar(cEntrez.frame)
+fasta_box = scrolledtext.ScrolledText(cEntrez.frame, yscrollcommand=fasta_scroll.set, height=10, wrap=tk.WORD, )
 fasta_box.grid(column=0, row=2,sticky='NW', padx=10, pady=10, columnspan=3)
 fasta_box.configure(state='disabled')
 
 #analyze output box
-analyze_box = scrolledtext.ScrolledText(fasta_frame, width=35, height=10, wrap=tk.WORD, )
+analyze_box = scrolledtext.ScrolledText(cEntrez.frame, width=35, height=10, wrap=tk.WORD, )
 analyze_box.grid(column=3, row=2,sticky='NW', padx=10, pady=10, columnspan=3)
 analyze_box.configure(state='disabled')
 
@@ -120,11 +193,11 @@ def analyze_prot():
 
 
 #analyze button
-analyze_button = ttk.Button(fasta_frame, text="Analyze", command=analyze_prot)
+analyze_button = ttk.Button(cEntrez.frame, text="Analyze", command=analyze_prot)
 analyze_button.grid(column=3, row=1,sticky='NW', padx=10, pady=10)
 analyze_button.configure(state='disabled')
 #save button
-save_button = ttk.Button(fasta_frame, text="Save", command=save_fasta )
+save_button = ttk.Button(cEntrez.frame, text="Save", command=save_fasta )
 save_button.grid(column=2, row=1,sticky='NW', padx=10, pady=10)
 save_button.configure(state='disabled')
 
@@ -132,38 +205,42 @@ fasta_frame.pack() #pack the frame
 
 ### Search BLAST ###
 # user options
-user_options = tk.Frame(win)
+user_options = tk.Frame(mframe)
+#collapsible pane
+cBlast = cp(user_options, 'Close BLAST', 'Open BLAST')
+cBlast.grid(row = 0, column = 0)
+
 # Search Label
-search_label = ttk.Label(user_options, text="Filter BLAST:")
+search_label = ttk.Label(cBlast.frame, text="Filter BLAST:")
 search_label.grid(column=0, row=3,sticky='NW', padx=10, pady=10)
 
 #search Entry
-search_entry = ttk.Entry(user_options, width=30)
+search_entry = ttk.Entry(cBlast.frame, width=30)
 search_entry.grid(column=1, row=3,sticky='NW', padx=10, pady=10)
 
 # dropdown
 search_var = tk.StringVar()
-search_combobox = ttk.Combobox(user_options, width=12, textvariable=search_var, state='readonly')
+search_combobox = ttk.Combobox(cBlast.frame, width=12, textvariable=search_var, state='readonly')
 search_combobox['values'] = ('All Fields','Accession', 'Organism', 'Protein Name')
 search_combobox.current(0)
 search_combobox.grid(column=2, row=3,sticky='NW', padx=10, pady=10)
 
 
 # Add a label
-res_size = ttk.Label(user_options, text="Result count:")
+res_size = ttk.Label(cBlast.frame, text="Result count:")
 res_size.grid(column=0, row=4,sticky='W', padx=10, pady=10)
 
 # Add a spinbox widget
-spin_size = Spinbox(user_options, from_=1, to=100, values=(5,10,20,30,40,50,75,100), width=5, bd=8)
+spin_size = Spinbox(cBlast.frame, from_=1, to=100, values=(5,10,20,30,40,50,75,100), width=5, bd=8)
 spin_size.grid(column=1, row=4,sticky='NW', padx=10, pady=10)
 
 #add a label
-threshold_label = ttk.Label(user_options, text="Threshold:")
+threshold_label = ttk.Label(cBlast.frame, text="Threshold:")
 threshold_label.grid(column=0, row=5,sticky='W', padx=10, pady=10)
 
 #add a float entry
 v = tk.StringVar()
-threshold_entry = ttk.Entry(user_options, width=5,text=v)
+threshold_entry = ttk.Entry(cBlast.frame, width=5,text=v)
 v.set("12")
 threshold_entry.grid(column=1, row=5,sticky='NW', padx=10, pady=10)
 
@@ -196,7 +273,7 @@ def click_me():
 
 
 # search button
-search_button = ttk.Button(user_options, text="BLAST",command=click_me)
+search_button = ttk.Button(cBlast.frame, text="BLAST",command=click_me)
 search_button.grid(column=2, row=5,sticky='NW', padx=10, pady=10)
 
 user_options.pack()
@@ -204,7 +281,7 @@ user_options.pack()
 
 
 # results
-results = tk.Frame(win)
+results = tk.Frame(mframe)
 results.pack(fill='x')
 
 result_label = ttk.Label(results, text="BLAST result:")
@@ -259,7 +336,7 @@ res_list.heading("align_length",text="Alignment Length",anchor='center')
 
 
 # alignment
-align_frame = tk.Frame(win)
+align_frame = tk.Frame(mframe)
 align_frame.pack()
 
 # radio buttons global and local
