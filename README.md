@@ -6,6 +6,7 @@ The code was written in conjucntion with chatGPT and Gizhub Copilot.
 This is a simple tool for fetching protein sequences from NCBI databses and Blasting against their sequence.
 
 Installation:
+
 Prequisites: Python3,(Git)
 1. clone repository with git or download from github
 ```
