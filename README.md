@@ -14,7 +14,7 @@ https://github.com/mirakct/GeoBT.git
 
 2. install python dependencies
 ```
-pip3 install biopython tkinter matplotlib python-dotenv
+pip3 install biopython matplotlib python-dotenv
 ```
 
 
