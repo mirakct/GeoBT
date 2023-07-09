@@ -252,7 +252,7 @@ def click_me():
     align_text.configure(state='normal')
     align_text.delete('1.0', tk.END)
     align_text.configure(state='disabled')
-
+    save_selected_button.configure(state='disabled')
     search_query = search_entry.get()
     search_type = '' if search_query == '' else '[' + search_var.get() + ']'
     search = (search_query + search_type)#.replace(' ', '%20')           # replace spaces with %20 for url
@@ -263,7 +263,7 @@ def click_me():
     blast_record = bp.blast_protein_sequence(protein_sequence, hl=int(spin_size.get()),entrez=search, threshold=float(search_threshold))
     global b_r
     b_r = blast_record
-    
+    save_selected_button.configure(state='normal')
 
     for a in blast_record:
         
@@ -335,6 +335,41 @@ res_list.heading("align_length",text="Alignment Length",anchor='center')
 
 
 
+    
+# save seleced rows to file function
+def save_selected():
+    # get selected rows
+    selected = res_list.selection()
+    records = []
+    for entry in selected:
+        curIndex = res_list.index(entry)
+        add_record = b_r[curIndex]
+        print(add_record)
+        records.append(add_record)
+
+    # save to file as fasta dialog
+    filetypes = (
+        ('fasta file', '*.fasta'),
+        ('All files', '*.*')
+    )
+
+    filename = fd.asksaveasfilename(
+        title='Save file as',
+        initialdir='./',
+        filetypes=filetypes,
+        defaultextension='.fasta',
+        
+    )
+
+    if filename:
+        bp.write_fasta_multi(filename, records)
+
+
+# save selected button
+save_selected_button = ttk.Button(results, text="Save selected", command=save_selected)
+save_selected_button.pack(side='top', anchor=tk.E, padx=10, pady=10)
+save_selected_button.config(state='disabled')
+
 # alignment
 align_frame = tk.Frame(mframe)
 align_frame.pack()
@@ -343,11 +378,18 @@ align_frame.pack()
 radio_frame = tk.Frame(align_frame)
 radio_frame.pack(side='top', padx=10, pady=10)
 global_local_var = tk.IntVar()
-tk.Radiobutton(radio_frame, text="global", variable=global_local_var, value=1).pack(side='left')
-tk.Radiobutton(radio_frame, text="local", variable=global_local_var, value=0).pack(side='left')
 
 
-
+def plot_alignment():
+    global plot_stats
+    reference = last_accession
+    ap.dotplot(plot_stats[0],plot_stats[1],mode=plot_stats[3],xlabel=last_accession,ylabel=plot_stats[2])
+    
+# plot alignment button
+global plot_stats
+plot_button = ttk.Button(align_frame, text="Plot alignment", command=plot_alignment)
+plot_button.pack(side='left', padx=10, pady=10)
+plot_button.config(state='disabled')
 
 align_label = ttk.Label(radio_frame, text="Alignment:")
 align_label.pack(side='top', padx=10, pady=10)
@@ -360,11 +402,14 @@ align_text.pack(side='left', fill='x')
 align_scroll.config(command=align_text.xview)
 
 #event on selecting a row in the treeview
-def selectItem(a):
+def selectItem(a=None):
+    plot_button.config(state='disabled')
     curItem = res_list.focus()
     curIndex = res_list.index(curItem)
     curQuery = b_r[curIndex][10]
-    curAlign = b_r[curIndex][12]
+    currAcc = b_r[curIndex][0]
+    curAlign = bp.read_fasta(bp.download_protein_sequence(currAcc)) 
+
     #annotation counter
     sep_no=25
     char_count = [str(i) for i in range(25, len(curAlign), sep_no)]
@@ -374,13 +419,22 @@ def selectItem(a):
     # call the alignment function
     g_l = 'global' if global_local_var.get() else 'local'
     alignment, score = bp.align_sequences(curQuery, curAlign, g_l)
+    global plot_stats
+    plot_stats = [curQuery, curAlign, currAcc, g_l]
 
     align_text.configure(state='normal')
     align_text.delete('1.0', tk.END)
     align_text.insert(tk.END, alignment  )
     align_text.insert(tk.END, newline_str)
     align_text.configure(state='disabled')
+    plot_button.config(state='normal')
     
+
+    
+
+tk.Radiobutton(radio_frame, text="global", variable=global_local_var, value=1, command=selectItem).pack(side='left')
+tk.Radiobutton(radio_frame, text="local", variable=global_local_var, value=0, command=selectItem).pack(side='left')
+
 res_list.bind('<<TreeviewSelect>>', selectItem)
 radio_frame.bind('<Button-1>', selectItem)
 

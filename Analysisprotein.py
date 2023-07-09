@@ -72,5 +72,43 @@ def analyze(sequence):                                                       # D
     out = '\n'.join((mw,ip,sol,ins))                                                # Join the results  
     return out                                                     # Return the results
 
+
+#protein alignment dot plot
+def dotplot(sequence1, sequence2, window=3 , mode="local", title="Alignment Dot Plot", xlabel="Sequence 1", ylabel="Sequence 2"):
+    """Create a dot plot comparing two sequences"""
+
+    # Create a window size X window size dictionary for sequence 1
+    seq1_dict = {}
+    for i in range(len(sequence1)):
+        seq1_dict[i] = sequence1[i]
+
+    # Create a window size X window size dictionary for sequence 2
+    seq2_dict = {}
+    for i in range(len(sequence2)):
+        seq2_dict[i] = sequence2[i]
+
+    # Create a window size X window size matrix containing the matches
+    matrix = []
+    for i in seq1_dict.keys():
+        row = []
+        for j in seq2_dict.keys():
+            if seq1_dict[i] == seq2_dict[j]:
+                row.append(1)
+            else:
+                row.append(0)
+        matrix.append(row)
+
+    # Plot the matrix
+    fig, ax = plt.subplots()
+    ax.imshow(matrix,'binary')
+
+    # Set the labels
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(mode + ' ' + title)
+
+    fig.show()
+
+
 if __name__ == '__main__':                                                      # If the script is executed directly
     pass

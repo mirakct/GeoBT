@@ -50,7 +50,7 @@ def get_accession_number(search_query):                                         
     print("Accession number:", accession_number)                                        # Printing the accession number
     return accession_number                                                             # Returning the accession number
 
-                                             # Getting the accession number
+                                            
 
 # Download protein from NCBI 
 def download_protein_sequence(accession):                                   # Defining the function
@@ -61,13 +61,30 @@ def download_protein_sequence(accession):                                   # De
                            retmode='text')                                  # Defining the return mode
     return handle.read()                                                    # Returning the record
 
+                                                     # Returning the sequence
 
+###DATA PROCESSING###
 
 #Save sequence as a fasta file  #needs the SeqIO module
 def write_fasta(path,seq):             # Defining the file path
     with open(path, "w") as file:                                          # Opening the file
         file.write(seq)                                                    # Writing the sequence to the file
     print("Saved sequence to", path)                                       # Printing the file path
+
+#faste from list
+def align_to_fasta(align):
+    fasta = ''
+    for i in align:
+        fasta += '>' + i[0] + ' ' + i[1] + ' ['+ i[2] + ']\n' + i[11] + "\n" + "\n"
+    return fasta
+
+#Save multiple records as a fasta file  #needs the SeqIO module
+def write_fasta_multi(path,align_list):             # Defining the file path
+    fasta_str=align_to_fasta(align_list)
+    records=StringIO(fasta_str)
+    records=SeqIO.parse(records, "fasta")                                              # Reading the handle
+    SeqIO.write(records, path, "fasta")                                                   # Writing the sequence to the file
+    print("Saved sequences to", path)                                       # Printing the file path
 
 def read_fasta(fasta_string):
     
@@ -99,21 +116,22 @@ def blast_protein_sequence(protein_sequence, hl=5, entrez='none', threshold='non
             save_file.write(result_handle.read())
         result_handle.close()
         print("Blast done")
+        
     except:
         errorout = open('errorlog.txt','a')
         errorout.write( str(datetime.datetime.now) +':' + 'failed blast database query' + '\n')
         errorout.close()
         return
 
-    out=[[0 for _ in range(13)] for _ in range(hl)]
+    out=[[0 for _ in range(14)] for _ in range(hl)]
 
     with open('blast.xml', 'r') as blast_file:
         blast_record = NCBIXML.parse(blast_file)        
 
         i=0
         for alignments in blast_record:
-            
             for alignment in alignments.alignments:
+                
                 gi,acc,_ = alignment.hit_id.split('|')
                 prt,org = alignment.hit_def.split('[',1)
                 org,_= org.split(']',1)
@@ -133,6 +151,7 @@ def blast_protein_sequence(protein_sequence, hl=5, entrez='none', threshold='non
                     out[i][10] =  hsp.query              #query
                     out[i][11] =  hsp.match              #match
                     out[i][12] =  hsp.sbjct              #subject
+                
                 i+=1
     return out
 
@@ -145,7 +164,9 @@ def blast_protein_sequence(protein_sequence, hl=5, entrez='none', threshold='non
 def align_sequences(seq1, seq2,scope='global'):
     
     aligner = Align.PairwiseAligner( mode=scope)
-    aligner.substitution_matrix = Align.substitution_matrices.load("BLOSUM62")
+    matrix = Align.substitution_matrices.load("BLASTP")
+    matrix = matrix.select(matrix.alphabet + "-" )
+    aligner.substitution_matrix = matrix
     alignments = aligner.align(seq1, seq2)
     alignments = list(alignments)
     alignment = alignments[0]
